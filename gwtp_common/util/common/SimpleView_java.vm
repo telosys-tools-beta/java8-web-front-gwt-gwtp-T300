@@ -1,0 +1,13 @@
+#parse("include/java_header_SRC.vm")
+
+import com.gwtplatform.mvp.client.View;
+
+/**
+ * Define contract for view.
+ * @param <P> the associated presenter
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public interface SimpleView<P> extends View {
+	// Force implementation and link creation between couple Presenter/View
+	void setPresenter(P presenter);
+}

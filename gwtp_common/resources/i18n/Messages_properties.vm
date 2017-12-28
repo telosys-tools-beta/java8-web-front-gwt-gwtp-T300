@@ -1,0 +1,29 @@
+commons.reset=Reset
+commons.create=Create
+commons.delete=Delete
+commons.update=Update
+
+#foreach( $entity in $selectedEntities )
+#set( $uncapitalizedEntityName = $fn.uncapitalize($entity.name) )
+layout.${uncapitalizedEntityName}=${entity.name}
+#end
+
+#foreach( $entity in $selectedEntities )
+#set( $uncapitalizedEntityName = $fn.uncapitalize($entity.name) )
+${uncapitalizedEntityName}.form.main.title=Creating new ${entity.name}
+#foreach( $field in ${entity.attributes} )
+#set( $capitalizedFieldName = $fn.capitalize($field.name) )
+${uncapitalizedEntityName}.form.${field.name}=${capitalizedFieldName}
+#end
+
+#end
+
+#foreach( $entity in $selectedEntities )
+#set( $uncapitalizedEntityName = $fn.uncapitalize($entity.name) )
+${uncapitalizedEntityName}.list.main.title=$entity.name list view
+#foreach( $field in ${entity.attributes} )
+#set( $capitalizedFieldName = $fn.capitalize($field.name) )
+${uncapitalizedEntityName}.list.${field.name}=${capitalizedFieldName}
+#end
+
+#end

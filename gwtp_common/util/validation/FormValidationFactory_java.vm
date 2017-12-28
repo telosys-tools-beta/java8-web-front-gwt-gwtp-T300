@@ -1,0 +1,43 @@
+#parse("include/java_header_SRC.vm")
+
+import javax.validation.Validator;
+
+import com.google.gwt.core.client.GWT;
+
+#foreach( $entity in $selectedEntities )
+import ${ROOT_PKG}.shared.dto.${entity}Dto;
+#end
+
+import de.knightsoftnet.validators.client.AbstractGwtValidatorFactory;
+import de.knightsoftnet.validators.client.GwtValidation;
+import de.knightsoftnet.validators.client.impl.AbstractGwtValidator;
+
+/**
+ * Declare the entity dto for validation purpose.
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public class FormValidationFactory extends AbstractGwtValidatorFactory {
+
+	/**
+	 * The Interface GwtValidator.
+	 */
+	@GwtValidation(value = { //
+	#foreach( $entity in $selectedEntities )
+	#if( $foreach.count == $selectedEntities.size())			
+	${entity.name}Dto.class //
+	#end
+	#if( $foreach.count!= $selectedEntities.size())			
+	${entity.name}Dto.class, //
+	#end
+	#end
+	})
+	public interface GwtValidator extends Validator {
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public AbstractGwtValidator createValidator() {
+		return GWT.create(GwtValidator.class);
+	}
+
+}

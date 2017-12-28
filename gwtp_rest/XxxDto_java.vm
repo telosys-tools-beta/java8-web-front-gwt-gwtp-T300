@@ -1,0 +1,115 @@
+#parse("include/java_header_SRC_Xxx.vm")
+#parse("include/velocimacros.vm")
+
+import java.io.Serializable;
+import javax.validation.constraints.*;
+#set( $dateAlreadyImported = false)
+#foreach( $field in $entity.attributes )
+#if(${field.wrapperType} == 'Date' && !$dateAlreadyImported)
+#set( $dateAlreadyImported = true)
+import java.util.Date;
+import com.fasterxml.jackson.annotation.JsonFormat;
+#end
+#end
+
+/**
+ * Dto for entity "${entity.databaseTable}" <br>
+ * @author Telosys ( http://www.telosys.org/ )
+ *
+ */
+public class ${entity.name}Dto implements Serializable
+{
+    private static final long serialVersionUID = 1L;
+
+#foreach( $field in $entity.keyAttributes )
+$beanValidation.annotationsForWrapperType(4,$field)
+#if(${field.type} == 'Date')
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private Date $field.name ;
+#else
+## Use macro for feed $restrictedType variable
+#restrictedType(${field.type})
+	private ${restrictedType} $field.name ;
+#end
+#end
+
+#foreach( $field in $entity.nonKeyAttributes )
+$beanValidation.annotationsForWrapperType(4,$field)
+#if(${field.type} == 'Date')
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private Date $field.name ;
+#else
+## Use macro for feed $restrictedType variable
+#restrictedType(${field.type})
+	private $restrictedType $field.name ;
+#end
+#end
+
+    /**
+     * Default constructor
+     */
+    public ${entity.name}Dto() {
+        super();
+    }
+    
+    //----------------------------------------------------------------------
+    // GETTER(S) & SETTER(S) FOR ID OR PRIMARY KEY 
+    //----------------------------------------------------------------------
+#foreach($field in $entity.keyAttributes)
+#if($field.setter)    
+    /**
+     * Set the "$field.name" field value
+     * @param $field.name
+     */
+## Use macro for feed $restrictedType variable
+#restrictedType(${field.type})
+	public void ${field.setter}(${restrictedType} $field.name) {
+		this.$field.name = $field.name ;
+	}
+#end
+
+#if ( $field.getter )
+    /**
+     * Get the "$field.name" field value
+     * @return the field value
+     */
+## Use macro for feed $restrictedType variable
+#restrictedType(${field.type})
+	public ${restrictedType} ${field.getter}() {
+        return this.$field.name;
+	}
+#end
+#end
+
+    //----------------------------------------------------------------------
+    // GETTER(S) & SETTER(S) FOR OTHER DATA FIELDS 
+    //----------------------------------------------------------------------
+#foreach($field in $entity.nonKeyAttributes)
+#if($field.setter)    
+    /**
+     * Set the "$field.name" field value
+     * @param $field.name
+     */
+## Use macro for feed $restrictedType variable
+#restrictedType(${field.type})
+	public void ${field.setter}(${restrictedType} $field.name) {
+		this.$field.name = $field.name ;
+	}
+#end
+
+#if ( $field.getter )
+    /**
+     * Get the "$field.name" field value
+     * @return the field value
+     */
+## Use macro for feed $restrictedType variable
+#restrictedType(${field.type})
+	public ${restrictedType} ${field.getter}() {
+        return this.$field.name;
+	}
+#end
+#end
+
+    @Override
+$java.toStringMethod($entity, 4)
+}

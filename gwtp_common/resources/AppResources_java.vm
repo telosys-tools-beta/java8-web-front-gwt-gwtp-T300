@@ -1,0 +1,74 @@
+#parse("include/java_header_SRC.vm")
+
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
+
+/**
+ * Resources definition.
+ * @see CssResource
+ * @see ImageResource
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public interface AppResources extends ClientBundle {
+	interface Normalize extends CssResource {
+	}
+
+	interface Style extends CssResource {
+
+		@ClassName("main-wrapper")
+		String mainWrapper();
+
+		@ClassName("icon-header")
+		String iconHeader();
+
+		@ClassName("icon-logout")
+		String iconLogout();
+
+		@ClassName("button-create")
+		String buttonCreate();
+
+		@ClassName("form-panel-footer")
+		String formPanelFooter();
+
+		@ClassName("notification-container")
+		String notificationContainer();
+
+		@ClassName("spinner")
+		String spinner();
+
+		@ClassName("bounce1")
+		String bounce1();
+
+		@ClassName("bounce2")
+		String bounce2();
+
+		@ClassName("bounce3")
+		String bounce3();
+		
+		@ClassName("clickable")
+		String clickable();
+		
+		@ClassName("footer-bar")
+		String footerBar();
+		
+		@ClassName("column-small")
+		String columnSmall();
+		
+		@ClassName("form-panel")
+		String formPanel();
+
+	}
+
+	@Source("gss/normalize.gss")
+	Normalize normalize();
+
+	@Source("gss/style.gss")
+	Style style();
+
+	@Source("images/logo.png")
+	ImageResource logo();
+
+	@Source("images/error.png")
+	ImageResource error();
+}

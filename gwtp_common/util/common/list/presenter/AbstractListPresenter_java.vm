@@ -1,0 +1,63 @@
+#parse("include/java_header_SRC.vm")
+
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.dispatch.rest.delegates.client.ResourceDelegate;
+import com.gwtplatform.mvp.client.proxy.PlaceManager;
+import com.gwtplatform.mvp.client.proxy.Proxy;
+import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
+import ${ROOT_PKG}.client.util.common.BasePresenter;
+import ${ROOT_PKG}.client.util.common.list.view.ListView;
+
+/**
+ * Abstract class wich contains commons stuff for all list presenter.
+ *
+ * @param <P> the presenter proxy @see {@link Proxy}
+ * @param <V> the associated wiew @see {@link FormView}
+ * @param <F> the entity dto associated with this presenter
+ * @param <R> the resources associated for perform CRUD operation
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public abstract class AbstractListPresenter<//
+		P extends Proxy<?>, //
+		V extends ListView<? extends AbstractListPresenter<P, V, F, R>, F>, //
+		F, //
+		R> extends BasePresenter<V, P> implements ListPresenter<F> {
+
+	// Main service for perform CRUD operation
+	@Inject
+	protected ResourceDelegate<R> service;
+
+	/**
+	 * Standard constructor.
+	 * @param eventBus the shared event bus
+	 * @param view the associated view
+	 * @param proxy the presenter proxy
+	 * @param pslot slot in wich render the content
+	 * @param placeManager navigation utility
+	 */
+	public AbstractListPresenter(final EventBus eventBus, final V view, final P proxy, final GwtEvent.Type<RevealContentHandler<?>> pslot, PlaceManager placeManager) {
+		super(eventBus, view, proxy, pslot, placeManager);
+	}
+
+	/**
+	 * Return the root tokens for the page after successfully creation/update.
+	 */
+	public abstract String getFormRouteToken();
+
+	@Override
+	public void onReveal() {
+		super.onReveal();
+		load();
+	}
+
+	public abstract void onDeleteClick(F data);
+
+	public abstract void load();
+
+	public abstract void onCreateClick();
+
+	public abstract void onUpdateClick(F data);
+
+}

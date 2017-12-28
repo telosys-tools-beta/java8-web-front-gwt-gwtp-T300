@@ -1,0 +1,67 @@
+#parse("include/java_header_SRC_Xxx.vm")
+#parse("include/velocimacros.vm")
+#set( $entityClass = "${entity.name}Dto" )
+
+import java.util.List;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
+import ${ROOT_PKG}.shared.dto.${entityClass};
+import ${ROOT_PKG}.shared.dto.common.ListItemDto;
+## --- Primary Key request path, e.g. "{customerCode}/{bookId}"
+## Use macro for feed $pkPath variable
+#pkPath($entity true)
+## --- Primary Key Path Variables, e.g. "@PathParam("customerCode") String customerCode, @PathParam("bookId") Integer bookId"
+#set( $pkPathVariables = "" )
+#foreach( $attribute in $entity.keyAttributes )
+#if( $foreach.count > 1 )
+#set( $pkPathVariables = "${pkPathVariables}, " )
+#end
+## Use macro for feed $restrictedType variable
+#restrictedType(${attribute.type})
+#set( $pkPathVariables = "${pkPathVariables}@PathParam(${QUOT}${attribute.name}${QUOT}) ${restrictedType} $attribute.name" )
+
+#end
+
+/**
+ * Define rest resource for ${entity.name}.
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+@Path("/${uncapitalizedEntityName}")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+public interface ${entity.name}Resource {
+
+	@GET
+	public List<${entityClass}> findAll();
+
+	@GET
+	@Path("${pkPath}")
+	${entityClass} get(${pkPathVariables});
+
+	@POST
+	void create(${entityClass} ${uncapitalizedEntityName});
+
+	@PUT
+	@Path("${pkPath}")
+	void update(${entityClass} ${uncapitalizedEntityName}, ${pkPathVariables});
+
+	@PUT
+	void save(${entityClass} ${uncapitalizedEntityName});
+
+	@DELETE
+	@Path("${pkPath}")
+	void delete(${pkPathVariables});
+
+	@GET
+	@Path("/${uncapitalizedEntityName}s-list-items")
+	List<ListItemDto> listItems();
+}

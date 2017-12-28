@@ -1,0 +1,40 @@
+#parse("include/java_header_SRC.vm")
+
+import javax.inject.Inject;
+
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.Widget;
+import com.gwtplatform.mvp.client.ViewImpl;
+
+/**
+ * View's implementation associated with the application presenter.
+ * @see ApplicationPresenter wich contains logic.
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public class ApplicationView extends ViewImpl implements ApplicationPresenter.MyView {
+	
+	/** View binder declaration. Associating this view implementation with 'ApplicationView.ui.xml' file */
+	interface Binder extends UiBinder<Widget, ApplicationView> {
+	}
+
+	// Simple panel where header content will be added
+	@UiField
+	SimplePanel headerPanel;
+	// Simple panel where main content wrapper will be added
+	@UiField
+	SimplePanel main;
+	// Simple panel where footer content will be added
+	@UiField
+	SimplePanel footerPanel;
+
+	@Inject
+	ApplicationView(Binder uiBinder) {
+		initWidget(uiBinder.createAndBindUi(this));
+		// Associate the defined slot to the graphic simple panel element
+		bindSlot(ApplicationPresenter.SLOT_HEADER, headerPanel);
+		bindSlot(ApplicationPresenter.SLOT_MAIN, main);
+		bindSlot(ApplicationPresenter.SLOT_FOOTER, footerPanel);
+	}
+}

@@ -1,0 +1,120 @@
+#parse("include/java_header_TEST_SRC_Xxx.vm")
+#parse("include/velocimacros.vm")
+
+import static com.gwtplatform.dispatch.rest.delegates.test.DelegateTestUtils.givenDelegate;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.inject.Inject;
+
+import org.jukito.JukitoRunner;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import com.gwtplatform.dispatch.rest.delegates.client.ResourceDelegate;
+import com.gwtplatform.mvp.client.proxy.PlaceManager;
+import com.gwtplatform.mvp.shared.proxy.PlaceRequest;
+import ${ROOT_PKG}.client.application.content.${lowerCaseEntityName}.list.${entity.name}ListPresenter;
+import ${ROOT_PKG}.client.application.content.${lowerCaseEntityName}.list.${entity.name}ListPresenter.${entity.name}ListView;
+import ${ROOT_PKG}.client.place.NameTokens;
+import ${ROOT_PKG}.client.place.TokenParameters;
+import ${ROOT_PKG}.shared.api.resources.${entity.name}Resource;
+import ${ROOT_PKG}.shared.dto.${entity.name}Dto;
+import ${ROOT_PKG}.test.util.BasePresenterTest;
+
+/**
+ * Test class for ${entity.name} list presenter.
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+@RunWith(JukitoRunner.class)
+public class ${entity.name}ListPresenterTest extends BasePresenterTest {
+
+	@Inject
+	${entity.name}ListPresenter ${lowerCaseEntityName}ListPresenter;
+
+	@Inject
+	ResourceDelegate<${entity.name}Resource> ${lowerCaseEntityName}Service;
+
+	@Inject
+	${entity.name}ListView myView;
+
+	@Test
+	public void onReveal() {
+		// Given
+		${entity.name}Dto ${lowerCaseEntityName} = mock(${entity.name}Dto.class);
+		${entity.name}Dto ${lowerCaseEntityName}2 = mock(${entity.name}Dto.class);
+		final List<${entity.name}Dto> ${lowerCaseEntityName}s = new ArrayList<>();
+		${lowerCaseEntityName}s.add(${lowerCaseEntityName});
+		${lowerCaseEntityName}s.add(${lowerCaseEntityName}2);
+		givenDelegate(${lowerCaseEntityName}Service).useResource(${entity.name}Resource.class).and().succeed().withResult(${lowerCaseEntityName}s).when().findAll();
+		// when
+		${lowerCaseEntityName}ListPresenter.onReveal();
+		// Then
+		verify(myView).display(${lowerCaseEntityName}s);
+	}
+
+	@Test
+	public void onDeleteClick() {
+		// Given
+		final ${entity.name}Dto ${lowerCaseEntityName} = new ${entity.name}Dto();
+## Use macro for mock pk field
+#mockDtoPkField(${entity})
+
+#set($restCallparams="") 
+#foreach( $field in ${entity.keyAttributes} )
+#if( $field.isKeyElement())
+#set( $upperCaseFkName = $fn.toUpperCase($field.name))
+#set( $capitalizedFieldName = $fn.capitalize($field.name))
+#set($restCallparams="${restCallparams}${lowerCaseEntityName}.get${capitalizedFieldName}()") 
+#if($foreach.index != ${entity.keyAttributesCount}- 1)
+#set($restCallparams="${restCallparams}, ") 
+#end
+#end
+#end
+		givenDelegate(${lowerCaseEntityName}Service).useResource(${entity.name}Resource.class).and().succeed().withResult((Void) null).when().delete(${restCallparams});
+		// When
+		${lowerCaseEntityName}ListPresenter.onDeleteClick(${lowerCaseEntityName});	
+		// Then	
+		// nothing to test, just ensure the code is covered for basic mistake
+	}
+
+	@Test
+	public void onCreateClick(PlaceManager placeManager) {
+## Use macro for feed $buildFormRevealPlaceParams variable
+#buildFormRevealPlaceParams(${entity} false)
+		// Given
+		PlaceRequest place = new PlaceRequest.Builder().nameToken(${buildFormRevealPlaceParams}.build();
+		// When
+		${lowerCaseEntityName}ListPresenter.onCreateClick();
+		// Then
+		verify(placeManager).revealPlace(eq(place));
+	}
+
+	@Test
+	public void onUpdateClick(PlaceManager placeManager) {
+		// Given
+		${entity.name}Dto ${lowerCaseEntityName} = mock(${entity.name}Dto.class);
+## Upper case entity name used in NameTokens resolution (ui routing)
+#foreach( $field in ${entity.keyAttributes} )
+#if($field.isKeyElement())
+#set($capitalizedFieldName = $fn.capitalize($field.name))
+## Use macro for feed $restrictedType variable
+#restrictedType($field.type)
+		given(${lowerCaseEntityName}.get${capitalizedFieldName}()).willReturn(${restrictedType}.valueOf("1"));
+#end
+#end
+## Use macro for feed $buildFormRevealPlaceParams variable
+#buildFormRevealPlaceParams(${entity} true)
+		PlaceRequest place = new PlaceRequest.Builder().nameToken(${buildFormRevealPlaceParams}.build();
+		// When
+		${lowerCaseEntityName}ListPresenter.onUpdateClick(${lowerCaseEntityName});
+		// Then
+		verify(placeManager).revealPlace(eq(place));
+	}
+
+}

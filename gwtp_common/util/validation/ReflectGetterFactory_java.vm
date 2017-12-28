@@ -1,0 +1,35 @@
+#parse("include/java_header_SRC.vm")
+
+import com.google.gwt.core.shared.GWT;
+#foreach( $entity in $selectedEntities )
+import ${ROOT_PKG}.shared.dto.${entity.name}Dto;
+#end
+
+import de.knightsoftnet.validators.client.AbstractGwtReflectGetterFactory;
+import de.knightsoftnet.validators.client.GwtReflectGetterInterface;
+import de.knightsoftnet.validators.client.GwtValidation;
+
+/**
+ * Utility class for getter reflect (because use of java.lang.reflect not full possible on client side).
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public class ReflectGetterFactory extends AbstractGwtReflectGetterFactory {
+
+	@GwtValidation(value = { //
+	#foreach( $entity in $selectedEntities )
+	#if( $foreach.count == $selectedEntities.size())			
+	${entity}Dto.class //
+	#end
+	#if( $foreach.count!= $selectedEntities.size())			
+	${entity}Dto.class, //
+	#end
+	#end
+	})
+	public interface GwtGetReflector extends GwtReflectGetterInterface {
+	}
+
+	@Override
+	public GwtReflectGetterInterface createGwtReflectGetter() {
+		return GWT.create(GwtGetReflector.class);
+	}
+}

@@ -1,0 +1,188 @@
+#parse("include/java_header_SRC_Xxx.vm")
+#parse("include/velocimacros.vm")
+## Use macro for feed $atLeastOneFk variable
+#atLeastOneFk($entity)
+#if($atLeastOneFk == true)
+import java.util.List;
+#end
+
+import ${ROOT_PKG}.client.application.ApplicationPresenter;
+import ${ROOT_PKG}.client.application.content.${lowerCaseEntityName}.form.${entity.name}FormPresenter.${entity.name}FormProxy;
+import ${ROOT_PKG}.client.application.content.${lowerCaseEntityName}.form.${entity.name}FormPresenter.${entity.name}FormView;
+import ${ROOT_PKG}.client.event.LoadingEvent;
+import ${ROOT_PKG}.client.place.NameTokens;
+import ${ROOT_PKG}.client.place.TokenParameters;
+import ${ROOT_PKG}.client.util.common.form.presenter.AbstractFormPresenter;
+import ${ROOT_PKG}.client.util.common.form.view.FormView;
+import ${ROOT_PKG}.shared.api.resources.${entity.name}Resource;
+## For each Value list (selected links), make needed import
+#foreach( $field in ${entity.attributes} )
+#if($field.isFK())
+import ${ROOT_PKG}.shared.api.resources.${field.referencedEntityName}Resource;
+#end
+#end
+import ${ROOT_PKG}.shared.dto.${entity.name}Dto;
+#if($atLeastOneFk)
+import ${ROOT_PKG}.shared.dto.common.ListItemDto;
+#end
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+#if($atLeastOneFk)
+import com.gwtplatform.dispatch.rest.delegates.client.ResourceDelegate;
+#end
+import com.gwtplatform.mvp.client.annotations.NameToken;
+import com.gwtplatform.mvp.client.annotations.ProxyStandard;
+import com.gwtplatform.mvp.client.proxy.PlaceManager;
+import com.gwtplatform.mvp.client.proxy.ProxyPlace;
+
+/**
+ * Presenter associated with $lowerCaseEntityName form view.
+ * @see ${entity.name}ViewImpl
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public class ${entity.name}FormPresenter extends AbstractFormPresenter<${entity.name}FormProxy, ${entity.name}FormView, ${entity.name}Dto, ${entity.name}Resource> {
+	// Define contract with the associated view
+	public interface ${entity.name}FormView extends FormView<${entity.name}FormPresenter, ${entity.name}Dto> {
+## For each Value list (fk), create the view interface for pass the data to the list
+#foreach($field in ${entity.attributes})
+#if($field.isFK())
+		void load${field.referencedEntityName}(List<ListItemDto> items);
+## Use macro for feed $restrictedType variable
+#restrictedType(${field.type})
+		void set${field.referencedEntityName}(${restrictedType} key);
+#end
+#end
+	}
+
+	/**
+	 * Proxy declaration, define an accessible place of the application.
+	 * @see NameToken for more information about place definition
+	 * @see ProxyPlace for more information about place definition
+	 */
+	@ProxyStandard
+	@NameToken(NameTokens.${formRootName})
+	public interface ${entity.name}FormProxy extends ProxyPlace<${entity.name}FormPresenter> {
+	}
+
+## For each Value list (selected links), inject the service for request the data
+#foreach( $field in ${entity.attributes} )
+#if($field.isFK())
+#set( $uncapitalizedTargetEntity = $fn.uncapitalize(${field.referencedEntityName}))
+	// Service for load list item value of ${field.referencedEntityName}
+	@Inject
+	ResourceDelegate<${field.referencedEntityName}Resource> ${uncapitalizedTargetEntity}Service;
+#end
+#end
+
+	/**
+	 * Standard constructor.
+	 * @param eventBus the shared event bus.
+	 * @param view the view contract
+	 * @param proxy the presenter proxy
+	 * @param placeManager the place manager
+	 */
+	@Inject
+	${entity.name}FormPresenter(EventBus eventBus, ${entity.name}FormView view, ${entity.name}FormProxy proxy, PlaceManager placeManager) {
+		super(eventBus, view, proxy, ApplicationPresenter.SLOT_MAIN, placeManager);
+		getView().setPresenter(this);
+	}
+
+#if( $atLeastOneFk )
+	/**
+	 *Load resource for fk value list box.
+	 */
+	@Override
+	public void loadFkListItemResource() {
+## For each Value list (selected links), inject the rest call for provide the data
+#foreach( $field in ${entity.attributes} )
+#if($field.isFK())
+#set($targetEntity = "${field.referencedEntityName}")
+#set($uncapitalizedTargetEntity = $fn.uncapitalize(${targetEntity}))
+		${uncapitalizedTargetEntity}Service.withCallback(new CallBack<List<ListItemDto>>() {
+			@Override
+			public void onSuccess(List<ListItemDto> items) {
+				getView().load${targetEntity}(items);
+			}
+		}).listItems();
+#end
+#end
+	}
+#end
+
+	@Override
+	public String getListRouteToken() {
+		return NameTokens.${listRootName};
+	}
+
+	/** Perform save call to rest resource.*/
+	@Override
+	public void saveAction(${entity.name}Dto data) {
+		LoadingEvent.fire(this, true);
+		if (updateMode) {
+## Use macro for feed $restCallFkParams variable
+#restCallPkParams($entity)
+			service.withCallback(new CallBack<Void>() {
+				@Override
+				public void onSuccess(Void nothing) {
+					success();
+				}
+			}).update(data, ${restCallPkParams});
+		} else {
+			service.withCallback(new CallBack<Void>() {
+				@Override
+				public void onSuccess(Void nothing) {
+					success();
+				}
+			}).create(data);
+		}
+	}
+
+	/** 
+	 * Perform load call to rest resource.
+	 * Recover id from the url adn determinate if we are in update mode or not.
+	 */
+	@Override
+	public void loadAction() {
+#set($restCallparams="") 
+#foreach( $field in ${entity.keyAttributes} )
+#if($field.isKeyElement())
+#set($upperCaseFkName = $fn.toUpperCase($field.name))
+#set($uncapitalizedFieldName = $fn.uncapitalize($field.name))
+		final String ${uncapitalizedFieldName} = getCurrentPlaceRequestId(TokenParameters.${upperCaseFkName});
+#if($field.isStringType())
+#set($restCallparams="${restCallparams}${uncapitalizedFieldName}") 
+#else
+## Use macro for feed $restrictedType variable
+#restrictedType(${field.type})
+#set($restCallparams="${restCallparams} ${restrictedType}.valueOf(${uncapitalizedFieldName})")
+#end
+#if($foreach.index != ${entity.keyAttributesCount}- 1)
+#set($restCallparams="${restCallparams}, ") 
+#end
+#end
+#end
+		updateMode = !${uncapitalizedFieldName}.equals(TokenParameters.DEFAULT_ID);
+		if (updateMode) {
+			LoadingEvent.fire(this, true);
+			service.withCallback(new CallBack<${entity.name}Dto>() {
+				@Override
+				public void onSuccess(${entity.name}Dto data) {
+					getView().load(data);
+#foreach( $field in ${entity.attributes} )
+#if($field.isFK())
+					// Set the value of foreign key ValueListBox since the list box can't be attached 
+					// to the view editor (widget are ignored with @Ignore)
+#set( $capitalizedFieldName = $fn.capitalize($field.name))
+					getView().set${field.referencedEntityName}(data.get${capitalizedFieldName}());
+#end
+#end
+					getView().setUpdateMode(updateMode);
+					LoadingEvent.fire(${entity.name}FormPresenter.this, false);
+				}
+			}).get($restCallparams);
+		} else {
+			getView().load(new ${entity.name}Dto());
+		}
+	}
+}

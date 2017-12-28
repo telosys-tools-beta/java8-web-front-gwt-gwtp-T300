@@ -1,0 +1,16 @@
+#parse("include/java_header_SRC.vm")
+
+/**
+ * Define contract for list presenter.
+ * @param <F> the entity dto associated with this presenter
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public interface ListPresenter<F> {
+
+	public void onCreateClick();
+
+	public void onDeleteClick(F data);
+
+	public void onUpdateClick(F data);
+
+}

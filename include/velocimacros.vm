@@ -1,0 +1,119 @@
+## Define restrictedType velocimacro
+## For frontend simplication, assuming this code is transpiled to Js, we ignore some java type
+## - Short, Long ==> Integer
+## - Float, BigDecimal ==> Double
+#macro(restrictedType $fieldType)
+#if( ${fieldType} == 'Short' || ${fieldType} == 'short' || ${fieldType} == 'Long' || ${fieldType} == 'long' || ${fieldType} == 'int' )
+#set($restrictedType =  'Integer')
+#elseif( ${fieldType} == 'Float' || ${fieldType} == 'float' || ${fieldType} == 'double' || ${fieldType} == 'BigDecimal' )
+#set($restrictedType =  'Double')
+#else
+#set($restrictedType =  ${fieldType})
+#end
+#end
+## Define revealPlaceParams velocimacro
+## Build the parameters to be passed to placemanager for navigation
+## will return for example : "TokenParameters.EMPLOYEECODE, data.getEmployeeCode(), TokenParameters.GROUPID, java.lang.String.valueOf(data.getGroupId())"
+#macro(revealPlaceParams $entity $updateMode)
+#set($revealPlaceParams="")
+#foreach($field in ${entity.keyAttributes})
+#if($field.isKeyElement())
+#set($capitalizedFieldName = $fn.capitalize($field.name))
+#set($upperCaseFkName = $fn.toUpperCase($field.name))
+#if(${updateMode} == true)
+#if($field.isStringType())
+#set($revealPlaceParams="${revealPlaceParams}TokenParameters.${upperCaseFkName}, data.get${capitalizedFieldName}()")
+#else
+#set($revealPlaceParams="${revealPlaceParams}TokenParameters.${upperCaseFkName}, java.lang.String.valueOf(data.get${capitalizedFieldName}())")
+#end
+#else
+#set($revealPlaceParams="${revealPlaceParams}TokenParameters.${upperCaseFkName}, TokenParameters.DEFAULT_ID")
+#end
+#if($foreach.index != ${entity.keyAttributesCount}- 1)
+#set($revealPlaceParams="${revealPlaceParams}, ")
+#end
+#end
+#end
+#end
+## Define restCallPkParams velocimacro
+## Feed the varaible $restCallPkParams with primary key element
+## example :  "data.getEmployeeCode(), data.getGroupId()"
+#macro(restCallPkParams $entity)
+#set($restCallPkParams="") 
+#foreach( $field in ${entity.keyAttributes} )
+#if($field.isKeyElement())
+#set($upperCaseFkName = $fn.toUpperCase($field.name))
+#set($capitalizedFieldName = $fn.capitalize($field.name))
+#set($restCallPkParams="${restCallPkParams}data.get${capitalizedFieldName}()") 
+#if($foreach.index != ${entity.keyAttributesCount}- 1)
+#set($restCallPkParams="${restCallPkParams}, ") 
+#end
+#end
+#end
+#end
+## Define atLeastOneFk velocimacro
+## Feed the variable atLeastOneFk if the entiy contains at least one fk
+#macro(atLeastOneFk $entity)
+#set($atLeastOneFk = false) 
+#foreach( $field in ${entity.attributes} )
+#if($field.isFK())
+#set( $atLeastOneFk = true)
+#end
+#end
+#end
+## Define pkPath
+## Feed the variable pkPath followfing primary key
+## example : "{customerCode}/{bookId}"
+#macro(pkPath $entity)
+#set( $pkPath = "" )
+#foreach( $attribute in $entity.keyAttributes )
+#if( $foreach.count > 1 )
+#set( $pkPath = "${pkPath}/" )
+#end
+#set( $pkPath = "${pkPath}{${attribute.name}}" )
+#end
+#end
+## USE ONLY IN TEST CLASSE : Define mockDtoPkField velocimacro
+## Generate pk set of for entity pk field and feed with mock value 
+#macro(mockDtoPkField $entity)
+#foreach( $field in ${entity.attributes} )
+#if($field.isNotNull() || $field.isNotEmpty() || $field.isNotBlank())
+#set( $fieldCapitalized = $fn.capitalize($field.name))
+## Use macro for feed $restrictedType variable
+#restrictedType(${field.type})
+#if(${restrictedType} == 'Date')
+		${lowerCaseEntityName}.set${fieldCapitalized}(new java.util.Date());
+#else
+		${lowerCaseEntityName}.set${fieldCapitalized}(${restrictedType}.valueOf("1"));
+#end
+#end
+#end
+
+## USE ONLY IN TEST CLASSE : Define mockFkRessource velocimacro
+## Generate mock call for fk resource using givenDelegate utility 
+#macro(mockFkRessource $entity)
+#foreach( $field in ${entity.attributes} )
+#if($field.isFK())
+#set( $uncapitalizedReferencedEntity = $fn.uncapitalize(${field.referencedEntityName}))
+		givenDelegate(${uncapitalizedReferencedEntity}Service).useResource(${field.referencedEntityName}Resource.class).and().succeed().withResult(getListItem()).when().listItems();
+#end
+#end
+#end
+#end
+## USE ONLY IN TEST CLASSE : Define buildFormRevealPlaceParams velocimacro
+## Generate reveal place parameter for reach form view 
+#macro(buildFormRevealPlaceParams $entity $updateMode)
+#set($buildFormRevealPlaceParams="NameTokens.${formRootName})") 
+#foreach( $field in ${entity.keyAttributes} )
+#if( $field.isKeyElement())
+#set( $upperCaseFkName = $fn.toUpperCase($field.name))
+#set( $capitalizedFieldName = $fn.capitalize($field.name))
+#if($updateMode)
+#set($buildFormRevealPlaceParams="${buildFormRevealPlaceParams}.with(TokenParameters.${upperCaseFkName},String.valueOf(${lowerCaseEntityName}.get${capitalizedFieldName}()))")
+#else
+#set($buildFormRevealPlaceParams="${buildFormRevealPlaceParams}.with(TokenParameters.${upperCaseFkName},TokenParameters.DEFAULT_ID)") 
+#end
+#end
+#end
+#end
+

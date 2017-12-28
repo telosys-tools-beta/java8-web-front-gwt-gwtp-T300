@@ -1,0 +1,30 @@
+#parse("include/java_header_SRC.vm")
+
+import javax.inject.Inject;
+
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.user.client.ui.Widget;
+import com.gwtplatform.mvp.client.ViewImpl;
+import ${ROOT_PKG}.client.application.content.error.ErrorPresenter.ErrorView;
+
+/**
+ * View's implementation associated with the error presenter.
+ * @see ErrorPresenter wich contains logic.
+ * @see ErrorView wich describe the contract with the presenter.
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public class ErrorViewImpl extends ViewImpl implements ErrorView {
+	
+	/** View binder declaration. Associating this view implementation with 'ErrorViewImpl.ui.xml' file */
+	interface Binder extends UiBinder<Widget, ErrorViewImpl> {
+	}
+
+	/**
+	 * Standard constructor.
+	 * @param uiBinder the view binder.
+	 */
+	@Inject
+	ErrorViewImpl(Binder uiBinder) {
+		initWidget(uiBinder.createAndBindUi(this));
+	}
+}

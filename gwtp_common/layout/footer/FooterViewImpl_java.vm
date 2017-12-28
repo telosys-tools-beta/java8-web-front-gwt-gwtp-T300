@@ -1,0 +1,62 @@
+#parse("include/java_header_SRC.vm")
+
+import javax.inject.Inject;
+
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Widget;
+import com.gwtplatform.mvp.client.ViewImpl;
+import ${ROOT_PKG}.client.application.layout.footer.FooterPresenter.FooterView;
+
+/**
+ * View's implementation associated with the footer presenter.
+ * @see FooterPresenter wich contains logic.
+ * @see FooterView wich describe the contract with the presenter.
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public class FooterViewImpl extends ViewImpl implements FooterView {
+
+	/** View binder declaration. Associating this view implementation with 'FooterViewImpl.ui.xml' file */
+	interface Binder extends UiBinder<Widget, FooterViewImpl> {
+	}
+
+	private FooterPresenter presenter;
+
+	// Top level view element
+	@UiField
+	HTMLPanel container;
+
+	/**
+	 * Standard constructor.
+	 * @param uiBinder the view binder.
+	 */
+	@Inject
+	FooterViewImpl(Binder uiBinder) {
+		initWidget(uiBinder.createAndBindUi(this));
+		// Bind to nested slot
+		bindSlot(FooterPresenter.SLOT_CONTENT, container);
+	}
+
+	@Override
+	public void setPresenter(FooterPresenter presenter) {
+		this.presenter = presenter;
+	}
+
+## For graphic concern, we limit the number of entity added in header nav bar.
+## If more then 8 entity, they are added in footer part
+#foreach( $entity in $selectedEntities )
+#if ($foreach.index > 8)
+#set( $uncapitalizedEntityName = $fn.uncapitalize($entity.name) )
+	// Handle click event on ${uncapitalizedEntityName} widget
+	@UiHandler(value = "${uncapitalizedEntityName}")
+	public void on${entity.name}Click(ClickEvent event) {
+		// Call presenter method
+		presenter.on${entity.name}Click();
+	}
+
+#end
+#end
+}

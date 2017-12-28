@@ -1,0 +1,87 @@
+#parse("include/java_header_SRC.vm")
+
+import javax.inject.Inject;
+
+import org.gwtbootstrap3.client.ui.NavbarCollapse;
+
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Widget;
+import com.gwtplatform.mvp.client.ViewImpl;
+import ${ROOT_PKG}.client.application.layout.header.HeaderPresenter.HeaderView;
+
+/**
+ * View's implementation associated with the header presenter.
+ * @see HeaderPresenter wich contains logic.
+ * @see HeaderView wich describe the contract with the presenter.
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public class HeaderViewImpl extends ViewImpl implements HeaderView {
+
+	/** View binder declaration. Associating this view implementation with 'HeaderViewImpl.ui.xml' file */
+	interface Binder extends UiBinder<Widget, HeaderViewImpl> {
+	}
+
+	private HeaderPresenter presenter;
+
+	// Top level view element
+	@UiField
+	HTMLPanel container;
+
+	// Spinner
+	@UiField
+	HTMLPanel spinner;
+
+	// Declared collapse element for fix a bug on autocollapse for small device (collapse.hide() after a click.
+	@UiField
+	NavbarCollapse collapse;
+
+	/**
+	 * Standard constructor.
+	 * @param uiBinder the view binder.
+	 */
+	@Inject
+	HeaderViewImpl(Binder uiBinder) {
+		initWidget(uiBinder.createAndBindUi(this));
+		bindSlot(HeaderPresenter.SLOT_CONTENT, container);
+	}
+
+	// Handle click event on home (logo)
+	@UiHandler(value = "logo")
+	public void onHomeClick(ClickEvent event) {
+		// Force collaspe for small device
+		collapse.hide();
+		// call presenter method	
+		presenter.onHomeClick();
+	}
+
+	@Override
+	public void showSpinner(boolean visible) {
+		spinner.setVisible(visible);
+	}
+
+	@Override
+	public void setPresenter(HeaderPresenter presenter) {
+		this.presenter = presenter;
+	}
+
+## For graphic concern, we limit the number of entity added in header nav bar.
+## If more then 8 entity, they are added in footer part
+#foreach( $entity in $selectedEntities )
+#if ($foreach.index <= 8)
+#set( $uncapitalizedEntityName = $fn.uncapitalize($entity.name) )
+	// Handle click event on ${uncapitalizedEntityName} widget
+	@UiHandler(value = "${uncapitalizedEntityName}")
+	public void on${entity.name}Click(ClickEvent event) {
+		// Force collaspe for small device
+		collapse.hide();
+		// Call presenter method
+		presenter.on${entity.name}Click();
+	}
+
+#end
+#end
+}

@@ -1,0 +1,114 @@
+#parse("include/java_header_SRC_Xxx.vm")
+#parse("include/velocimacros.vm")
+
+import java.util.List;
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.annotations.NameToken;
+import com.gwtplatform.mvp.client.annotations.ProxyStandard;
+import com.gwtplatform.mvp.client.proxy.PlaceManager;
+import com.gwtplatform.mvp.client.proxy.ProxyPlace;
+import ${ROOT_PKG}.client.application.ApplicationPresenter;
+import ${ROOT_PKG}.client.application.content.${lowerCaseEntityName}.list.${entity.name}ListPresenter.${entity.name}ListProxy;
+import ${ROOT_PKG}.client.application.content.${lowerCaseEntityName}.list.${entity.name}ListPresenter.${entity.name}ListView;
+import ${ROOT_PKG}.client.event.LoadingEvent;
+import ${ROOT_PKG}.client.place.NameTokens;
+import ${ROOT_PKG}.client.place.TokenParameters;
+import ${ROOT_PKG}.client.util.common.list.presenter.AbstractListPresenter;
+import ${ROOT_PKG}.client.util.common.list.view.ListView;
+import ${ROOT_PKG}.shared.api.resources.${entity.name}Resource;
+import ${ROOT_PKG}.shared.dto.${entity.name}Dto;
+
+/**
+ * Presenter associated with $lowerCaseEntityName list view.
+ * @see ${entity.name}ViewImpl
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public class ${entity.name}ListPresenter extends AbstractListPresenter<${entity.name}ListProxy, ${entity.name}ListView, ${entity.name}Dto, ${entity.name}Resource> {
+	// Define contract with the associated view
+	public interface ${entity.name}ListView extends ListView<${entity.name}ListPresenter, ${entity.name}Dto> {
+	}
+
+	/**
+	 * Proxy declaration, define an accessible place of the application.
+	 * @see NameToken for more information about place definition
+	 * @see ProxyPlace for more information about place definition
+	 */
+	@ProxyStandard
+	@NameToken(NameTokens.${listRootName})
+	public interface ${entity.name}ListProxy extends ProxyPlace<${entity.name}ListPresenter> {
+	}
+
+	/**
+	 * Standard constructor.
+	 * @param eventBus the shared event bus.
+	 * @param view the view contract
+	 * @param proxy the presenter proxy
+	 * @param placeManager the place manager
+	 */
+	@Inject
+	${entity.name}ListPresenter(EventBus eventBus, ${entity.name}ListView view, ${entity.name}ListProxy proxy, PlaceManager placeManager) {
+		super(eventBus, view, proxy, ApplicationPresenter.SLOT_MAIN, placeManager);
+		getView().setPresenter(this);
+	}
+
+	@Override
+	public String getFormRouteToken() {
+		return NameTokens.${formRootName};
+	}
+	
+	/**
+     * Action performed after a click on create button.
+     * Routing to the form view with default new id.
+     */
+	@Override
+	public void onCreateClick() {
+## Use macro for feed $revealPlaceParams variable
+#revealPlaceParams($entity false)
+		revealPlace(getFormRouteToken(), ${revealPlaceParams});
+	}
+
+	/**
+     * Loading the date and fill the view table.
+     */
+	@Override
+	public void load() {
+		LoadingEvent.fire(this, true);
+		service.withCallback(new CallBack<List<${entity.name}Dto>>() {
+			@Override
+			public void onSuccess(List<${entity.name}Dto> datas) {
+				getView().display(datas);
+				LoadingEvent.fire(${entity.name}ListPresenter.this, false);
+			}
+		}).findAll();
+	}
+
+	/**
+     * Action performed after a click on delete row button.
+     * Make delete call to the rest api.
+     */
+	@Override
+	public void onDeleteClick(${entity.name}Dto data) {
+## Use macro for feed $restCallPkParams variable
+#restCallPkParams($entity)
+		LoadingEvent.fire(this, true);
+		service.withCallback(new CallBack<Void>() {
+			@Override
+			public void onSuccess(Void nothing) {
+				load();
+			}
+		}).delete(${restCallPkParams});
+	}
+
+	/**
+     * Action performed after a click on update row button.
+     * Routing to the form view with selected entity's id.
+     */
+	@Override
+	public void onUpdateClick(${entity.name}Dto data) {
+## Use macro for feed $revealPlaceParams variable
+#revealPlaceParams($entity true)
+		revealPlace(getFormRouteToken(), ${revealPlaceParams});
+	}
+}

@@ -1,0 +1,123 @@
+#parse("include/java_header_SRC.vm")
+
+import java.util.Date;
+import java.util.List;
+
+import org.gwtbootstrap3.client.ui.constants.ButtonType;
+import org.gwtbootstrap3.client.ui.constants.IconType;
+import org.gwtbootstrap3.client.ui.gwt.ButtonCell;
+import org.gwtbootstrap3.client.ui.gwt.CellTable;
+
+import com.google.gwt.core.shared.GWT;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.i18n.shared.DateTimeFormat;
+import com.google.gwt.i18n.shared.DateTimeFormat.PredefinedFormat;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.view.client.ListDataProvider;
+import com.gwtplatform.mvp.client.ViewImpl;
+import ${ROOT_PKG}.client.resources.i18n.Messages;
+import ${ROOT_PKG}.client.util.common.list.presenter.ListPresenter;
+
+/**
+ * Abstract class wich contains commons stuff for all list view implemntation.
+ * @param <P> the presenter associated with this view
+ * @param <F> the entity dto associated with this presenter
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public abstract class AbstractListView<//
+		P extends ListPresenter<F>,//
+		F> //
+		extends ViewImpl implements ListView<P, F> {
+
+	// Limit for a text representation of a value inside a list cell (prevent large content breaking layout)
+	protected static final int CELL_MAX_CHAR = 200;
+
+	// i18n
+	protected Messages messages = GWT.create(Messages.class);
+
+	protected P presenter;
+
+	// Table element used for render result
+	@UiField
+	public CellTable<F> table;
+	// Provider associated with the result table
+	protected ListDataProvider<F> provider = new ListDataProvider<>();
+
+	// default constructor
+	public AbstractListView() {
+		super();
+	}
+
+	/** Init column of the table in this method. */
+	public abstract void initCellTable();
+
+	// Display result in the table result
+	@Override
+	public void display(List<F> data) {
+		provider.getList().clear();
+		provider.getList().addAll(data);
+		provider.flush();
+	}
+
+	// Handle click event on create button
+	@UiHandler(value = "create")
+	public void onCreateClick(ClickEvent event) {
+		presenter.onCreateClick();
+	}
+
+	@Override
+	public void setPresenter(P presenter) {
+		this.presenter = presenter;
+	}
+
+	// Utility method used for add a column with deletion button
+	protected void addDeletionColumn() {
+		final Column<F, String> deletion = getDeletionColumn();
+		table.addColumn(deletion, messages.delete());
+		table.setColumnWidth(deletion, 30, Unit.PX);
+	}
+
+	// Utility method used for add a column with update button
+	protected void addUpdateColumn() {
+		final Column<F, String> update = getUpdateColumn();
+		table.addColumn(update, messages.update());
+		table.setColumnWidth(update, 30, Unit.PX);
+	}
+
+	// Utility method for create a deletion column
+	private Column<F, String> getDeletionColumn() {
+		final Column<F, String> deletion = new Column<F, String>(new ButtonCell(ButtonType.DANGER, IconType.TRASH)) {
+			@Override
+			public String getValue(F object) {
+				return "";
+			}
+		};
+		deletion.setFieldUpdater((index, player, value) -> presenter.onDeleteClick(player));
+		deletion.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+		return deletion;
+	}
+
+	// Utility method for create an update column
+	private Column<F, String> getUpdateColumn() {
+		final Column<F, String> update = new Column<F, String>(new ButtonCell(ButtonType.SUCCESS, IconType.PENCIL)) {
+			@Override
+			public String getValue(F object) {
+				return "";
+			}
+		};
+		update.setFieldUpdater((index, author, value) -> presenter.onUpdateClick(author));
+		update.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+		return update;
+
+	}
+
+	// Utility method used for format a given date
+	protected String formatDate(Date date) {
+		return date != null ? DateTimeFormat.getFormat(PredefinedFormat.DATE_SHORT).format(date) : "";
+	}
+
+}

@@ -1,0 +1,47 @@
+#parse("include/java_header_SRC.vm")
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.annotations.NameToken;
+import com.gwtplatform.mvp.client.annotations.ProxyStandard;
+import com.gwtplatform.mvp.client.proxy.PlaceManager;
+import com.gwtplatform.mvp.client.proxy.ProxyPlace;
+import ${ROOT_PKG}.client.application.ApplicationPresenter;
+import ${ROOT_PKG}.client.application.content.home.HomePresenter.HomeProxy;
+import ${ROOT_PKG}.client.application.content.home.HomePresenter.HomeView;
+import ${ROOT_PKG}.client.place.NameTokens;
+import ${ROOT_PKG}.client.util.common.BasePresenter;
+
+/**
+ * Presenter associated with home view.
+ * @see HomeViewImpl
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public class HomePresenter extends BasePresenter<HomeView, HomeProxy> {
+	// Define contract with the associated view
+	public interface HomeView extends View {
+	}
+
+	/**
+	 * Proxy declaration, define an accessible place of the application.
+	 * @see NameToken for more information about place definition
+	 * @see ProxyPlace for more information about place definition
+	 */
+	@ProxyStandard
+	@NameToken(NameTokens.HOME)
+	public interface HomeProxy extends ProxyPlace<HomePresenter> {
+	}
+
+	/**
+	 * Standard constructor.
+	 * @param eventBus the shared event bus.
+	 * @param view the view contract
+	 * @param proxy the presenter proxy
+	 * @param placeManager the place manager
+	 */
+	@Inject
+	HomePresenter(EventBus eventBus, HomeView view, HomeProxy proxy, PlaceManager placeManager) {
+		super(eventBus, view, proxy, ApplicationPresenter.SLOT_MAIN, placeManager);
+	}
+}

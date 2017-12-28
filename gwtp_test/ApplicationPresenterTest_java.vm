@@ -1,0 +1,33 @@
+#parse("include/java_header_TEST_SRC.vm")
+
+import javax.inject.Inject;
+
+import org.jukito.JukitoRunner;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import ${ROOT_PKG}.client.application.ApplicationPresenter;
+import ${ROOT_PKG}.test.util.PresenterTestModule;
+
+/**
+ * Test class for application presenter.
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+@RunWith(JukitoRunner.class)
+public class ApplicationPresenterTest {
+
+	public static class Module extends PresenterTestModule {
+		@Override
+		protected void configurePresenterTest() {
+		}
+	}
+
+	@Inject
+	ApplicationPresenter applicationPresenter;
+
+	@Test
+	public void onBindTest() {
+		applicationPresenter.onBind();
+	}
+
+}

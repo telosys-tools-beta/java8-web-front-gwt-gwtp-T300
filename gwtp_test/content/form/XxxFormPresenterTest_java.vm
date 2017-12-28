@@ -1,0 +1,138 @@
+#parse("include/java_header_TEST_SRC_Xxx.vm")
+#parse("include/velocimacros.vm")
+
+import static com.gwtplatform.dispatch.rest.delegates.test.DelegateTestUtils.givenDelegate;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.verify;
+
+import javax.inject.Inject;
+
+import org.jukito.JukitoRunner;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+
+import com.gwtplatform.dispatch.rest.delegates.client.ResourceDelegate;
+import com.gwtplatform.mvp.client.proxy.PlaceManager;
+import com.gwtplatform.mvp.shared.proxy.PlaceRequest;
+import ${ROOT_PKG}.client.application.content.${lowerCaseEntityName}.form.${entity.name}FormPresenter;
+import ${ROOT_PKG}.client.application.content.${lowerCaseEntityName}.form.${entity.name}FormPresenter.${entity.name}FormView;
+import ${ROOT_PKG}.client.place.NameTokens;
+import ${ROOT_PKG}.client.place.TokenParameters;
+import ${ROOT_PKG}.shared.api.resources.${entity.name}Resource;
+## For each Value list (selected links), make needed import
+#foreach( $field in ${entity.attributes} )
+#if($field.isFK())
+import ${ROOT_PKG}.shared.api.resources.${field.referencedEntityName}Resource;
+#end
+#end
+import ${ROOT_PKG}.shared.dto.${entity.name}Dto;
+import ${ROOT_PKG}.test.util.BasePresenterTest;
+
+/**
+ * Test class for ${entity.name} form presenter.
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+@RunWith(JukitoRunner.class)
+public class ${entity.name}FormPresenterTest extends BasePresenterTest {
+
+	@Inject
+	${entity.name}FormPresenter ${lowerCaseEntityName}FormPresenter;
+
+	@Inject
+	ResourceDelegate<${entity.name}Resource> ${lowerCaseEntityName}Service;
+
+#foreach( $field in ${entity.attributes} )
+#if($field.isFK())
+#set( $uncapitalizedReferencedEntity = $fn.uncapitalize(${field.referencedEntityName}))
+	@Inject
+	ResourceDelegate<${field.referencedEntityName}Resource> ${uncapitalizedReferencedEntity}Service;
+#end
+#end
+
+	@Inject
+	${entity.name}FormView myView;
+
+	@Test
+	public void onRevealCreationMode(PlaceManager placeManager) {
+## Use macro for feed $buildFormRevealPlaceParams variable
+#buildFormRevealPlaceParams(${entity} false)
+		// Given
+		PlaceRequest requestCreation = new PlaceRequest.Builder().nameToken(${buildFormRevealPlaceParams}.build();
+		given(placeManager.getCurrentPlaceRequest()).willReturn(requestCreation);
+## Use macro for mock fk resource call
+#mockFkRessource(${entity})
+		// When
+		${lowerCaseEntityName}FormPresenter.onReveal();
+		// Then
+		verify(myView, Mockito.atLeastOnce()).load(Mockito.any(${entity.name}Dto.class));
+	}
+
+	@Test
+	public void onRevealUpdateMode(PlaceManager placeManager) {
+		// Given
+		${entity.name}Dto ${lowerCaseEntityName} = new ${entity.name}Dto();
+## Use macro for mock pk field
+#mockDtoPkField(${entity})
+
+#set($getCallparams="") 
+#foreach( $field in ${entity.keyAttributes} )
+#if( $field.isKeyElement())
+#set( $upperCaseFkName = $fn.toUpperCase($field.name))
+#set( $capitalizedFieldName = $fn.capitalize($field.name))
+## Use macro for feed $restrictedType variable
+#restrictedType(${field.type})
+#if($field.isStringType())
+#set($getCallparams="${getCallparams}${lowerCaseEntityName}.get${capitalizedFieldName}()") 
+#else
+#set($getCallparams="${getCallparams} ${restrictedType}.valueOf(${lowerCaseEntityName}.get${capitalizedFieldName}())")
+#end
+#if($foreach.index != ${entity.keyAttributesCount}- 1)
+#set($getCallparams="${getCallparams}, ") 
+#end
+#end
+#end
+## Use macro for feed $buildFormRevealPlaceParams variable
+#buildFormRevealPlaceParams(${entity} true)
+		PlaceRequest requestCreation = new PlaceRequest.Builder().nameToken(${buildFormRevealPlaceParams}.build();
+		given(placeManager.getCurrentPlaceRequest()).willReturn(requestCreation);
+		givenDelegate(${lowerCaseEntityName}Service).useResource(${entity.name}Resource.class).and().succeed().withResult(${lowerCaseEntityName}).when().get(${getCallparams});
+## Use macro for mock fk resource call
+#mockFkRessource(${entity})
+		// When
+		${lowerCaseEntityName}FormPresenter.onReveal();
+		// Then
+		verify(myView, Mockito.atLeastOnce()).load(${lowerCaseEntityName});
+	}
+
+	@Test
+	public void onSaveCreationMode(PlaceManager placeManager) {
+		// Given
+		PlaceRequest placeRequest = new PlaceRequest.Builder().nameToken(NameTokens.${listRootName}).build();
+		${entity.name}Dto ${lowerCaseEntityName} = new ${entity.name}Dto();
+## Use macro for mock pk field
+#mockDtoPkField(${entity})
+		givenDelegate(${lowerCaseEntityName}Service).useResource(${entity.name}Resource.class).and().succeed().withResult((Void) null).when().create(${lowerCaseEntityName});
+		// When
+		${lowerCaseEntityName}FormPresenter.save(${lowerCaseEntityName});
+		// Then
+		verify(placeManager).revealPlace(eq(placeRequest));
+	}
+
+	@Test
+	public void onSaveUpdateMode(PlaceManager placeManager) {
+		// Given
+		PlaceRequest placeRequest = new PlaceRequest.Builder().nameToken(NameTokens.${listRootName}).build();
+		${entity.name}Dto ${lowerCaseEntityName} = new ${entity.name}Dto();
+## Use macro for mock pk field
+#mockDtoPkField(${entity})
+		givenDelegate(${lowerCaseEntityName}Service).useResource(${entity.name}Resource.class).and().succeed().withResult((Void) null).when().update(${lowerCaseEntityName},${getCallparams});
+		// When
+		${lowerCaseEntityName}FormPresenter.setUpdateMode(true);
+		${lowerCaseEntityName}FormPresenter.save(${lowerCaseEntityName});
+		// Then
+		verify(placeManager).revealPlace(eq(placeRequest));
+	}
+
+}

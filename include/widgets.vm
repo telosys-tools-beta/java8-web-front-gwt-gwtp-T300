@@ -1,0 +1,23 @@
+## ----------------------------------------------------
+## Set the 'widgetType' for the given field
+## ----------------------------------------------------
+#macro(setWidgetType $field )
+##
+#if     ( $field.isStringType() && $field.isLongText() )
+#set( $widgetType = 'TextArea' )
+#elseif ( $field.isStringType() && ! $field.isLongText() ) 
+#set( $widgetType = 'TextBox')
+#elseif ( $field.isByteType() || $field.isShortType() || $field.isIntegerType() || $field.isLongType()  ) 
+#set( $widgetType = 'IntegerBox')
+#elseif ( $field.isFloatType() || $field.isDoubleType() || $field.isDecimalType() ) 
+#set( $widgetType = 'DoubleBox')
+#elseif ( $field.isDateType() ) 
+#set( $widgetType = 'DatePicker')
+#elseif( $field.isBooleanType() )
+#set( $widgetType = 'CheckBox')
+#else
+## Default widget type
+#set( $widgetType = 'TextBox')
+#end
+##
+#end

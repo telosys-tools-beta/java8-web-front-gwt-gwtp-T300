@@ -1,0 +1,9 @@
+#parse("include/java_header_TEST_SRC.vm")
+## Declare command stuff for entity processing
+#set($uncapitalizedEntityName = $fn.uncapitalize($entity.name))
+## Lower case entity name used in import declaration
+#set( $lowerCaseEntityName = $entity.name.toLowerCase())
+## Upper case entity name used in NameTokens resolution (ui routing)
+#set( $upperCaseEntityName = $entity.name.toUpperCase())
+#set( $formRootName = "${upperCaseEntityName}_FORM" )
+#set( $listRootName = "${upperCaseEntityName}_LIST" )

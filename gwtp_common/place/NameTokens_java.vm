@@ -1,0 +1,28 @@
+#parse("include/java_header_SRC.vm")
+#parse("include/velocimacros.vm")
+
+/**
+ * Utility class used for store the route corresponding to proxy place.
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public class NameTokens {
+
+	private NameTokens() {
+	}
+
+	public static final String HOME = "/";
+	public static final String ERROR = "/error";
+
+## For each entity we generate both Form route and List route
+#foreach( $entity in $selectedEntities )
+#set( $upperCaseEntityName = $fn.toUpperCase($entity.name))
+#set( $uncapitalizedEntityName = $fn.uncapitalize($entity.name) )
+#set( $listRootName = "${upperCaseEntityName}_LIST" )
+#set( $formRootName = "${upperCaseEntityName}_FORM" )
+	// ---------- Route for entity "$entity.name"
+## Use macro for feed $pkPath variable
+#pkPath($entity true)
+	public static final String ${listRootName} = "/${uncapitalizedEntityName}";
+	public static final String ${formRootName} = "/${uncapitalizedEntityName}/${pkPath}";
+#end
+}

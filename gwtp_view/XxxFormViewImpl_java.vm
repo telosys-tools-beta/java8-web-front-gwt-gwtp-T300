@@ -1,0 +1,126 @@
+#parse("include/java_header_SRC_Xxx.vm")
+#parse("include/velocimacros.vm")
+#parse("include/widgets.vm")
+## Use macro for feed $atLeastOneFk variable
+#atLeastOneFk($entity)
+
+#if($atLeastOneFk)
+import java.util.List;
+import java.util.stream.Collectors;
+#end
+
+import javax.inject.Inject;
+
+import org.gwtbootstrap3.client.ui.*;
+## Resolve if the entity got a date element and add the corresponding import
+#set( $haveDateField = false)
+#foreach( $field in ${entity.attributes} )
+#if(!$field.isFK())
+#if($field.fullType == 'java.util.Date' && !$haveDateField)
+#set( $haveDateField = true)
+import org.gwtbootstrap3.extras.datepicker.client.ui.DatePicker;
+#end
+#end
+#end
+
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Widget;
+import ${ROOT_PKG}.client.application.content.${lowerCaseEntityName}.form.${entity.name}FormPresenter.${entity.name}FormView;
+import ${ROOT_PKG}.client.util.common.form.view.AbstractFormView;
+import ${ROOT_PKG}.shared.dto.${entity.name}Dto;
+#if($atLeastOneFk)
+import ${ROOT_PKG}.shared.dto.common.ListItemDto;
+#end
+
+import de.knightsoftnet.validators.client.editor.BeanValidationEditorDriver;
+
+public class ${entity.name}FormViewImpl extends AbstractFormView<${entity.name}FormPresenter, ${entity.name}Dto> implements ${entity.name}FormView {
+	interface Binder extends UiBinder<Widget, ${entity.name}FormViewImpl> {
+	}
+
+	interface Driver extends BeanValidationEditorDriver<${entity.name}Dto, ${entity.name}FormViewImpl> {
+	}
+
+## For each attributes, resolve the widget type and add the element
+## #set( $widgetType = 'none')
+#foreach( $field in ${entity.attributes} )
+#setWidgetType($field) ## set '$widgetType' value
+#if($field.isFK())
+	@Ignore
+	@UiField(provided = true)
+	protected ValueListBox<ListItemDto> ${field.name};
+#else
+#*
+#if($field.fullType == 'java.lang.String')
+#if($field.isLongText())
+#set( $widgetType = 'TextArea')
+#else
+#set( $widgetType = 'TextBox')
+#end
+#elseif($field.fullType == 'java.lang.Boolean')
+#set( $widgetType = 'CheckBox')
+#elseif($field.fullType == 'java.lang.Short' || $field.fullType == 'java.lang.Integer'|| $field.fullType == 'java.lang.Long')
+#set( $widgetType = 'IntegerBox')
+#elseif($field.fullType == 'java.lang.Double'|| $field.fullType == 'java.lang.Float'|| $field.fullType == 'java.math.BigDecimal')
+#set( $widgetType = 'DoubleBox')
+#elseif($field.fullType == 'java.util.Date')
+#set( $widgetType = 'DatePicker')
+#end
+*#
+	@UiField
+	protected ${widgetType} ${field.name};
+#end
+#end
+
+	@Inject
+	${entity.name}FormViewImpl(Binder uiBinder, final Driver driver) {
+		super(driver);
+## For each fk, init value list widget
+#foreach( $field in ${entity.attributes} )
+#if($field.isFK())
+		this.${field.name} = initListItemBox();
+#end
+#end
+		initWidget(uiBinder.createAndBindUi(this));
+		//this.driver.initialize(this);
+		super.initialize(this);
+	}
+
+	@Override
+	protected ${entity.name}Dto beforeValidation(${entity.name}Dto data) {
+## For each fk, add value in dto because editor don't feed automatically data object on flush
+#foreach( $field in ${entity.attributes} )
+#if($field.isFK())
+## Use macro for feed $restrictedType variable
+#restrictedType(${field.type})
+#set( $capitalizedFieldName = $fn.capitalize(${field.name}))
+		data.set${capitalizedFieldName}(java.lang.${restrictedType}.valueOf(${field.name}.getValue().getValue()));
+#end
+#end
+		return data;
+	}
+
+#foreach( $field in ${entity.attributes} )
+#if($field.isFK())
+#set( $targetEntity = "${field.referencedEntityName}")
+	@Override
+	public void load${field.referencedEntityName}(List<ListItemDto> items) {
+		${field.name}.setValue(items.get(0));
+		${field.name}.setAcceptableValues(items.stream().collect(Collectors.toList()));
+	}
+
+#end
+#end
+#foreach( $field in ${entity.attributes} )
+#if($field.isFK())
+## Use macro for feed $restrictedType variable
+#restrictedType(${field.type})
+	@Override
+	public void set${field.referencedEntityName}(${restrictedType} key) {
+		${field.name}.setValue(new ListItemDto(String.valueOf(key)));
+	}
+
+#end
+#end
+}

@@ -1,0 +1,145 @@
+#parse("include/java_header_SRC.vm")
+
+import java.util.logging.Logger;
+
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.http.client.Response;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.dispatch.rest.client.RestCallback;
+import com.gwtplatform.mvp.client.Presenter;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.proxy.PlaceManager;
+import com.gwtplatform.mvp.client.proxy.Proxy;
+import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
+import com.gwtplatform.mvp.shared.proxy.PlaceRequest;
+import ${ROOT_PKG}.client.event.LoadingEvent;
+import ${ROOT_PKG}.client.place.NameTokens;
+import ${ROOT_PKG}.client.place.TokenParameters;
+
+/**
+ * Abstract class wich contains commons stuff for all presenter.
+ *
+ * @param <P> the presenter proxy
+ * @param <V> the associated view
+ * @author Telosys ( http://www.telosys.org/ ) 
+ */
+public abstract class BasePresenter<//
+		V extends View, //
+		P extends Proxy<?>> //
+		extends Presenter<V, P> {
+
+	// Common logger, can be used in all child presenter
+	protected static final Logger logger = Logger.getLogger(BasePresenter.class.getSimpleName());
+
+	// Navigation utility
+	protected PlaceManager placeManager;
+
+	/**
+	 * Standard constructor.
+	 * @param eventBus the shared event bus
+	 * @param view the view contract
+	 * @param proxy the presenter proxy
+	 * @param revealType presenter reveal type
+	 * @param placeManager navigation utility
+	 */
+	public BasePresenter(EventBus eventBus, V view, P proxy, RevealType revealType, PlaceManager placeManager) {
+		this(eventBus, view, proxy, revealType, null, placeManager);
+	}
+
+	/**
+	 * Standard constructor.
+	 * @param eventBus the shared event bus
+	 * @param view the view contract
+	 * @param proxy the presenter proxy
+	 * @param slot  slot in wich render the content
+	 * @param placeManager navigation utility
+	 */
+	public BasePresenter(EventBus eventBus, V view, P proxy, GwtEvent.Type<RevealContentHandler<?>> slot, PlaceManager placeManager) {
+		this(eventBus, view, proxy, null, slot, placeManager);
+	}
+	
+	/**
+	 * Standard constructor.
+	 * @param eventBus the shared event bus
+	 * @param view the view contract
+	 * @param proxy the presenter proxy
+	 * @param revealType presenter reveal type
+	 * @param slot  slot in wich render the content
+	 * @param placeManager navigation utility
+	 */
+	public BasePresenter(EventBus eventBus, V view, P proxy, RevealType revealType, GwtEvent.Type<RevealContentHandler<?>> slot, PlaceManager placeManager) {
+		super(eventBus, view, proxy, revealType, slot);
+		this.placeManager = placeManager;
+	}
+
+	// Centralised method for error management
+	// Must be call in each failure callback
+	protected void manageError(Throwable caught, int statutCode) {
+		// Hide spinner
+		LoadingEvent.fire(this, false);
+		// log the error
+		logger.severe("An error occured : " + caught.getMessage() + " | Response status code :" + statutCode);
+		// navigate to error view
+		revealPlace(NameTokens.ERROR);
+	}
+	
+	// Utility method for navigation, reveal place for the given token (or default place if no match)
+	protected void revealPlace(String token) {
+		placeManager.revealPlace(new PlaceRequest.Builder().nameToken(token).build());
+	}
+
+	// Utility method for navigation, reveal place for the given token and parameter (or default place if no match)
+	protected void revealPlace(String token, String param, String value) {
+		placeManager.revealPlace(new PlaceRequest.Builder().nameToken(token).with(param, value).build());
+	}
+
+	// Utility method for navigation, reveal place for the given token and parameter (or default place if no match)
+	protected void revealPlace(String token, String param, Integer value) {
+		placeManager.revealPlace(new PlaceRequest.Builder().nameToken(token).with(param, String.valueOf(value)).build());
+	}
+
+	// Utility method for navigation, reveal place for the given token and parameter (or default place if no match)
+	protected void revealPlace(String token, String param1, String value1, String param2, String value2) {
+		placeManager.revealPlace(new PlaceRequest.Builder().nameToken(token).with(param1, value1).with(param2, value2).build());
+	}
+
+	// Utility method for navigation, reveal place for the given token and parameter (or default place if no match)
+	protected void revealPlace(String token, String param1, Integer value1, String param2, Integer value2) {
+		placeManager.revealPlace(new PlaceRequest.Builder().nameToken(token).with(param1, String.valueOf(value1)).with(param2, String.valueOf(value2)).build());
+	}
+
+	/**
+	 * Custom implementation of RestCallBack for reduce boilerplate code and centralize error management.
+	 * @param <T> the expected result type for success case
+	 */
+	protected abstract class CallBack<T> implements RestCallback<T> {
+
+		// Status code extracted from response for specific error management
+		private int statusCode;
+
+		@Override
+		public void onFailure(Throwable caught) {
+			manageError(caught, statusCode);
+		}
+
+		@Override
+		public void setResponse(Response response) {
+			statusCode = response.getStatusCode();
+		}
+	}
+
+	// Recover current place request (based on standard Id param)
+	public String getCurrentPlaceRequestId() {
+		return getCurrentPlaceRequestParam(TokenParameters.ID, TokenParameters.DEFAULT_ID);
+	}
+
+	// Recover current place request following given parameter
+	public String getCurrentPlaceRequestId(String param) {
+		return getCurrentPlaceRequestParam(param, TokenParameters.DEFAULT_ID);
+	}
+
+	// Recover current place request following given parameter
+	public String getCurrentPlaceRequestParam(String parameter, String defaultValue) {
+		return placeManager.getCurrentPlaceRequest().getParameter(parameter, defaultValue);
+	}
+}

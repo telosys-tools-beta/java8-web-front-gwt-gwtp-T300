@@ -1,0 +1,170 @@
+#parse("include/java_header_SRC.vm")
+
+import java.util.ArrayList;
+import java.util.Set;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.groups.Default;
+
+import org.apache.http.HttpStatus;
+
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.dispatch.rest.delegates.client.ResourceDelegate;
+import com.gwtplatform.mvp.client.proxy.PlaceManager;
+import com.gwtplatform.mvp.client.proxy.Proxy;
+import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
+import ${ROOT_PKG}.client.event.LoadingEvent;
+import ${ROOT_PKG}.client.place.NameTokens;
+import ${ROOT_PKG}.client.util.common.BasePresenter;
+import ${ROOT_PKG}.client.util.common.form.view.FormView;
+
+/**
+ * Abstract class wich contains commons stuff for all form presenter.
+ *
+ * @param <P> the presenter proxy @see {@link Proxy}
+ * @param <V> the associated wiew @see {@link FormView}
+ * @param <F> the entity dto associated with this presenter
+ * @param <R> the resources associated for perform CRUD operation
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public abstract class AbstractFormPresenter<//
+		P extends Proxy<?>, //
+		V extends FormView<? extends AbstractFormPresenter<P, V, F, R>, F>, //
+		F, //
+		R> //
+		extends BasePresenter<V, P> implements FormPresenter<F> {
+
+	// Main service for perform CRUD operation
+	@Inject
+	protected ResourceDelegate<R> service;
+	// Define the mode of this presenter
+	// true = update the entity
+	// false = creating an entity
+	protected boolean updateMode = false;
+
+	/**
+	 * Standard constructor.
+	 * @param eventBus the shared event bus
+	 * @param view the associated view
+	 * @param proxy the presenter proxy
+	 * @param pslot slot in wich render the content
+	 * @param placeManager navigation utility
+	 */
+	public AbstractFormPresenter(final EventBus eventBus, final V view, final P proxy, final GwtEvent.Type<RevealContentHandler<?>> pslot, PlaceManager placeManager) {
+		super(eventBus, view, proxy, pslot, placeManager);
+	}
+
+	/**
+	 * Return the root tokens for the page after successfully creation/update.
+	 */
+	public abstract String getListRouteToken();
+
+	/**
+	 * Override this method if special operation need to be done on data before
+	 * call server.
+	 */
+	public F beforeSave(F data) {
+		return data;
+	}
+
+	/**
+	 * Override this method if the entity refer to pk.
+	 * Process of list loading in this method to ensure the list are loaded before we load en entity.
+	 */
+	public void loadFkListItemResource() {
+	}
+
+	/**
+	 * Basic onReveal(), ensure notification is hide and perform a load action.
+	 */
+	@Override
+	public void onReveal() {
+		super.onReveal();
+		getView().showNotification(false);
+		loadFkListItemResource();
+		load();
+	}
+
+	public abstract void loadAction();
+
+	@Override
+	public void load() {
+		loadAction();
+	}
+
+	public abstract void saveAction(F data);
+
+	@Override
+	public void save(F data) {
+		// Recover the validator
+		Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+		// Validate data
+		Set<ConstraintViolation<F>> violations = validator.validate(data, Default.class);
+		// If any constraints detected
+		if (!violations.isEmpty()) {
+			getView().setConstraintsViolations(new ArrayList<ConstraintViolation<?>>(violations));
+		} else {
+			// Make server call
+			saveAction(data);
+		}
+	}
+
+	// In case of success :
+	// Show notification label
+	// Hide the spinner
+	// Navigate to list view
+	protected void success() {
+		getView().showNotification(true);
+		LoadingEvent.fire(AbstractFormPresenter.this, false);
+		revealPlace(getListRouteToken());
+	}
+
+	// Reset the form field
+	@Override
+	public void reset() {
+		load();
+	}
+
+	/**
+	 * Override this method in form presenter if you want specific message.
+	 * Occurs when rest-api return a CONFLICT(409) httpStatus code.
+	 */
+	public void manageConflictError() {
+		logger.severe("A conflict error occured");
+		getView().showNotificationError(true, "The entity already exist !");
+	}
+
+	/**
+	 * Override this method in form presenter if you want specific message.
+	 * Occurs when rest-api return a NOT_FOUND(404) httpStatus code.
+	 */
+	public void manageNotFoundError() {
+		logger.severe("A not found error occured");
+		getView().showNotificationError(true, "The entity don't exist !");
+	}
+
+	@Override
+	protected void manageError(Throwable caught, int statutCode) {
+		LoadingEvent.fire(this, false);
+		if (statutCode == HttpStatus.SC_CONFLICT) {
+			manageConflictError();
+		} else if (statutCode == HttpStatus.SC_NOT_FOUND) {
+			manageNotFoundError();
+		} else {
+			logger.severe("An error occured dans form presenter : " + caught.getMessage());
+			revealPlace(NameTokens.ERROR);
+		}
+	}
+
+	public boolean isUpdateMode() {
+		return updateMode;
+	}
+
+	public void setUpdateMode(boolean updateMode) {
+		this.updateMode = updateMode;
+	}
+}

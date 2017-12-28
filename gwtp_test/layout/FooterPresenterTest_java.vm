@@ -1,0 +1,45 @@
+#parse("include/java_header_TEST_SRC.vm")
+
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.verify;
+
+import javax.inject.Inject;
+
+import org.jukito.JukitoRunner;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import com.gwtplatform.mvp.client.proxy.PlaceManager;
+import com.gwtplatform.mvp.shared.proxy.PlaceRequest;
+import ${ROOT_PKG}.client.application.layout.footer.FooterPresenter;
+import ${ROOT_PKG}.client.application.layout.footer.FooterPresenter.FooterView;
+import ${ROOT_PKG}.client.place.NameTokens;
+
+/**
+ * Test class for footer presenter.
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+@RunWith(JukitoRunner.class)
+public class FooterPresenterTest {
+
+	@Inject
+	FooterPresenter footerPresenter;
+	@Inject
+	FooterView view;
+
+#foreach( $entity in $selectedEntities )
+#if ($foreach.index > 8)
+#set( $upperCaseEntityName = $fn.toUpperCase($entity.name))
+#set( $listRootName = "${upperCaseEntityName}_LIST" )
+	@Test
+	public void on${entity.name}Click(PlaceManager placeManager) {
+		// Given
+		PlaceRequest placeRequest = new PlaceRequest.Builder().nameToken(NameTokens.${listRootName}).build();
+		// When
+		footerPresenter.on${entity.name}Click();
+		// Then
+		verify(placeManager).revealPlace(eq(placeRequest));
+	}
+#end
+#end
+}

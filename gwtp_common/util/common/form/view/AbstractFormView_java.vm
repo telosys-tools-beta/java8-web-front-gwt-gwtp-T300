@@ -1,0 +1,155 @@
+#parse("include/java_header_SRC.vm")
+
+import java.util.Date;
+
+import javax.validation.ConstraintViolation;
+
+import org.gwtbootstrap3.client.ui.Button;
+import org.gwtbootstrap3.client.ui.Column;
+import org.gwtbootstrap3.client.ui.Label;
+import org.gwtbootstrap3.client.ui.PanelBody;
+import org.gwtbootstrap3.client.ui.ValueListBox;
+import org.gwtbootstrap3.extras.datepicker.client.ui.DatePicker;
+
+import com.google.gwt.editor.client.Editor;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.i18n.shared.DateTimeFormat;
+import com.google.gwt.i18n.shared.DateTimeFormat.PredefinedFormat;
+import com.google.gwt.text.shared.AbstractRenderer;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.view.client.ProvidesKey;
+import com.gwtplatform.mvp.client.ViewImpl;
+import ${ROOT_PKG}.client.util.common.form.presenter.FormPresenter;
+import ${ROOT_PKG}.shared.dto.common.ListItemDto;
+
+import de.knightsoftnet.validators.client.editor.BeanValidationEditorDriver;
+
+/**
+ * Abstract class wich contains commons stuff for all form view implemntation.
+ * @param <P> the presenter associated with this view
+ * @param <F> the entity dto associated with this presenter
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public abstract class AbstractFormView<//
+		P extends FormPresenter<F>,//
+		F> //
+		extends ViewImpl //
+		implements FormView<P, F>, Editor<F> {
+
+	protected P presenter;
+
+	// Declare the form driver (will assure automation in data transfer : form field <==> dto
+	private final BeanValidationEditorDriver<F, AbstractFormView<P, F>> driver;
+
+	// Common graphics element @Ignore for prevent driver to search for them inside the dto
+	@Ignore
+	@UiField
+	public PanelBody body;
+	@Ignore
+	@UiField
+	public Button create;
+	@Ignore
+	@UiField
+	public Column notification;
+	@Ignore
+	@UiField
+	public Label labelNotification;
+	@Ignore
+	@UiField
+	public Column notificationError;
+	@Ignore
+	@UiField
+	public Label labelNotificationError;
+
+	/**
+	 * Standard constructor.
+	 * @param pdriver the bean validation driver associated to this form.
+	 */
+	@SuppressWarnings("unchecked")
+	public AbstractFormView(final BeanValidationEditorDriver<F, ? extends AbstractFormView<P, F>> pdriver) {
+		super();
+		this.driver = (BeanValidationEditorDriver<F, AbstractFormView<P, F>>) pdriver;
+	}
+
+	protected void initialize(AbstractFormView<P, F> formView) {
+		driver.initialize(formView);
+	}
+
+	/** Override this method to perform action on data before validation. */
+	protected F beforeValidation(F data) {
+		return data;
+	}
+
+	@UiHandler("create")
+	public void onCreateClick(ClickEvent event) {
+		F data = driver.flush();
+		data = beforeValidation(data);
+		presenter.save(data);
+	}
+
+	@UiHandler("reset")
+	public void onResetClick(ClickEvent event) {
+		presenter.reset();
+	}
+
+	@Override
+	public void setConstraintsViolations(Iterable<ConstraintViolation<?>> violations) {
+		driver.setConstraintViolations(violations);
+	}
+
+	@Override
+	public void showNotification(boolean visible) {
+		notification.setVisible(visible);
+	}
+
+	@Override
+	public void load(F team) {
+		this.driver.edit(team);
+	}
+
+	@Override
+	public void setUpdateMode(boolean updateMode) {
+		create.setText(updateMode ? "Save" : "Create");
+		labelNotification.setText(updateMode ? "Saved succesfully" : "Created succesfully");
+	}
+
+	@Override
+	public void setPresenter(P presenter) {
+		this.presenter = presenter;
+	}
+
+	@Override
+	public void showNotificationError(boolean visible, String text) {
+		labelNotificationError.setText(text);
+		notificationError.setVisible(visible);
+	}
+
+	// Utility method used for create a ValueListBox widget based on ListItemDto
+	@Ignore
+	protected ValueListBox<ListItemDto> initListItemBox() {
+		return new ValueListBox<>(new AbstractRenderer<ListItemDto>() {
+			@Override
+			public String render(ListItemDto item) {
+				return (item != null && item.getLabel() != null) ? item.getLabel() : "";
+			}
+		}, new ProvidesKey<ListItemDto>() {
+
+			@Override
+			public Object getKey(ListItemDto item) {
+				return (item != null && item.getValue() != null) ? item.getValue() : "";
+			}
+		});
+	}
+
+	// Utility method used for format a date 
+	protected String formatDate(Date date) {
+		return DateTimeFormat.getFormat(PredefinedFormat.DATE_SHORT).format(date);
+	}
+
+	// Utility method for initialize a date picker
+	protected void initDatePicker(DatePicker datePicker) {
+		datePicker.setGWTFormat(LocaleInfo.getCurrentLocale().getDateTimeFormatInfo().dateFormatShort());
+	}
+}

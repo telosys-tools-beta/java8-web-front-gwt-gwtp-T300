@@ -1,0 +1,30 @@
+#parse("include/java_header_SRC.vm")
+
+import javax.inject.Inject;
+
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.user.client.ui.Widget;
+import com.gwtplatform.mvp.client.ViewImpl;
+import ${ROOT_PKG}.client.application.content.home.HomePresenter.HomeView;
+
+/**
+ * View's implementation associated with the home presenter.
+ * @see HomePresenter wich contains logic.
+ * @see HomeView wich describe the contract with the presenter.
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public class HomeViewImpl extends ViewImpl implements HomeView {
+
+	/** View binder declaration. Associating this view implementation with 'HomeViewImpl.ui.xml' file */
+    interface Binder extends UiBinder<Widget, HomeViewImpl> {
+    }
+
+	/**
+	 * Standard constructor.
+	 * @param uiBinder the view binder.
+	 */
+    @Inject
+    HomeViewImpl(Binder uiBinder) {
+        initWidget(uiBinder.createAndBindUi(this));
+    }
+}

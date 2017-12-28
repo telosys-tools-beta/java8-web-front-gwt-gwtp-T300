@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.8.0//EN"
+        "http://gwtproject.org/doctype/2.8.0/gwt-module.dtd">
+<module rename-to='appModule'>
+	<inherits name="com.gwtplatform.dispatch.rest.delegates.ResourceDelegate" />
+	<inherits name='com.google.gwt.user.User' />
+	<inherits name="com.google.gwt.i18n.I18N" />
+	<inherits name="com.gwtplatform.dispatch.rest.DispatchRest" />
+	<inherits name="com.gwtplatform.mvp.MvpWithEntryPoint" />
+	<inherits name="org.gwtbootstrap3.GwtBootstrap3" />
+	<inherits name="org.gwtbootstrap3.extras.datepicker.DatePicker" />
+	<inherits name="de.knightsoftnet.validators.GwtBeanValidators" />
+
+	<!-- Main Gin module, equivalent to entry point -->
+	<extend-configuration-property name="gin.ginjector.modules" value="${ROOT_PKG}.client.gin.ClientModule" />
+
+	<!-- Specify the paths for translatable code -->
+	<source path='client' />
+	<source path='shared' />
+
+	<!-- Enable Gss support, for more information see http://www.gwtproject.org/doc/latest/DevGuideGssVsCss.html -->
+	<set-configuration-property name="CssResource.enableGss" value="true" />
+	<!-- Disable automatic version checker -->
+	<set-configuration-property name="verifyNewerVersion" value="false" />
+
+	<!-- Message resolver for localized error messages, use our version. -->
+	<replace-with class="de.knightsoftnet.validators.client.CustomValidationMessagesResolver">
+		<when-type-is class="de.knightsoftnet.validators.client.ProviderValidationMessageResolver" />
+	</replace-with>
+
+	<!-- Our own validation factory implementation with @GwtValidation entries for each bean we want to validate -->
+	<replace-with class="${ROOT_PKG}.client.util.validation.FormValidationFactory">
+		<when-type-is class="javax.validation.ValidatorFactory" />
+	</replace-with>
+
+	<!-- Our own reflection factory implementation with @GwtValidation entries for each bean we need getter access by reflection -->
+	<replace-with class="${ROOT_PKG}.client.util.validation.ReflectGetterFactory">
+		<when-type-is class="de.knightsoftnet.validators.client.GwtReflectGetterFactoryInterface" />
+	</replace-with>
+
+	<!-- Reduce compiled size by using striped code -->
+	<set-property name="compiler.stackMode" value="strip" />
+
+	<!-- i18n configuration -->
+	<!-- Availabe Locales -->
+	<extend-property name="locale" values="en" />
+	<extend-property name="locale" values="fr" />
+	<set-property name="locale" value="en,fr" />
+
+	<!-- Fallback (default locale) -->
+	<set-property-fallback name="locale" value="en" />
+
+	<!-- For dev mode, uncomment this line to reduce number of permutation (safari ==> for google chrome navigator) -->
+ 	<!-- <set-property name="user.agent" value="safari" /> -->
+</module>

@@ -1,0 +1,66 @@
+#parse("include/java_header_SRC.vm")
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.Presenter;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.annotations.ProxyStandard;
+import com.gwtplatform.mvp.client.presenter.slots.NestedSlot;
+import com.gwtplatform.mvp.client.presenter.slots.PermanentSlot;
+import com.gwtplatform.mvp.client.proxy.Proxy;
+import ${ROOT_PKG}.client.application.layout.footer.FooterPresenter;
+import ${ROOT_PKG}.client.application.layout.header.HeaderPresenter;
+
+/**
+ * Presenter associated with application main view.
+ * This couple presenter/view don't refer to a given screen. That why the proxy don't extend ProxyPlace.
+ * This is the main layout definition.
+ * @see ApplicationViewImpl
+ * @see HeaderPresenter
+ * @see FooterPresenter
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public class ApplicationPresenter extends Presenter<ApplicationPresenter.MyView, ApplicationPresenter.MyProxy> {
+	// Define contract with the associated view
+	public interface MyView extends View {
+	}
+
+	/**
+	 * Proxy declaration.
+	 */
+	@ProxyStandard
+	interface MyProxy extends Proxy<ApplicationPresenter> {
+	}
+
+	// Wrapper slot : will be used for all content presenter to be included in
+	public static final NestedSlot SLOT_MAIN = new NestedSlot();
+
+	// Layout slot, added one time when application start.
+	public static final PermanentSlot<HeaderPresenter> SLOT_HEADER = new PermanentSlot<>();
+	public static final PermanentSlot<FooterPresenter> SLOT_FOOTER = new PermanentSlot<>();
+
+	@Inject
+	private HeaderPresenter headerPresenter;
+
+	@Inject
+	private FooterPresenter footerPresenter;
+
+	/**
+	 * Standard constructor.
+	 * @param eventBus the shared event bus.
+	 * @param view the view contract
+	 * @param proxy the presenter proxy
+	 */
+	@Inject
+	ApplicationPresenter(EventBus eventBus, MyView view, MyProxy proxy) {
+		super(eventBus, view, proxy, RevealType.Root);
+	}
+
+	@Override
+	public void onBind() {
+		super.onBind();
+		// Associate permanent slot with their presenter
+		setInSlot(SLOT_HEADER, headerPresenter);
+		setInSlot(SLOT_FOOTER, footerPresenter);
+	}
+}

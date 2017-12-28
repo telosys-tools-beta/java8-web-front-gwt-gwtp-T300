@@ -1,0 +1,59 @@
+#parse("include/java_header_SRC.vm")
+
+/**
+ * I18n interface used for store message key and access internationnalized message.
+ * @author Telosys ( http://www.telosys.org/ )
+ */
+public interface Messages extends com.google.gwt.i18n.client.Messages {
+
+	@Key("commons.reset")
+	String reset();
+
+	@Key("commons.create")
+	String create();
+
+	@Key("commons.delete")
+	String delete();
+
+	@Key("commons.update")
+	String update();
+
+	// Layout link
+#foreach( $entity in $selectedEntities )
+#set( $uncapitalizedEntityName = $fn.uncapitalize($entity.name) )
+	// Lists titlelayout.author
+	@Key("layout.${uncapitalizedEntityName}")
+	String layout${entity.name}();
+#end
+
+	// Forms
+#foreach( $entity in $selectedEntities )
+#set( $uncapitalizedEntityName = $fn.uncapitalize($entity.name) )
+	// Forms title
+	@Key("${uncapitalizedEntityName}.form.main.title")
+	String ${uncapitalizedEntityName}FormMainTitle();
+	// Forms fields
+#foreach( $field in ${entity.attributes} )
+#set( $capitalizedFieldName = $fn.capitalize($field.name) )
+	@Key("${uncapitalizedEntityName}.form.${field.name}")
+	String ${uncapitalizedEntityName}Form${capitalizedFieldName}();
+#end
+
+#end
+
+	// Lists
+#foreach( $entity in $selectedEntities )
+#set( $uncapitalizedEntityName = $fn.uncapitalize($entity.name) )
+	// Lists title
+	@Key("${uncapitalizedEntityName}.list.main.title")
+	String ${uncapitalizedEntityName}ListMainTitle();
+	// Lists column headers
+#foreach( $field in ${entity.attributes} )
+#set( $capitalizedFieldName = $fn.capitalize($field.name) )
+	@Key("${uncapitalizedEntityName}.list.${field.name}")
+	String ${uncapitalizedEntityName}List${capitalizedFieldName}();
+#end
+
+#end
+
+}
